@@ -5,18 +5,19 @@ body {
 }
 
 .container {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+}
+
+.left-column, .right-column {
+    width: 45%;
 }
 
 textarea {
     width: 100%;
     padding: 10px;
     font-family: monospace;
+    margin-bottom: 10px;
 }
 
 button {
@@ -32,16 +33,18 @@ button:hover {
     background-color: #45a049;
 }
 
-.error {
-    background-color: #f2dede;
+select {
+    width: 100%;
     padding: 10px;
-    border-radius: 5px;
-    color: #a94442;
+    margin-bottom: 10px;
 }
 
-.success {
-    background-color: #dff0d8;
+pre {
+    background-color: #eee;
     padding: 10px;
     border-radius: 5px;
-    color: #3c763d;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 400px;
+    overflow: auto;
 }
