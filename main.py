@@ -1,17 +1,7 @@
 from flask import Flask, render_template, request
 import json
-from schemas.check_device_status_response_schema import (
-    check_device_status_response_schema,
-)
+from jsonschema import ValidationError
 from utils.validationUtils import ValidationUtils as v
-from schemas.reverify_servergen_id_response_schema import (
-    reverify_servergen_id_response_schema,
-)
-from schemas.user_bank_account_list_response_schema import (
-    user_bank_account_list_response_schema,
-)
-from schemas.check_vpa_response_schema import check_vpa_response_schema
-from schemas.register_response_schema import register_response_schema
 
 app = Flask(__name__)
 
@@ -108,48 +98,72 @@ def dereference_schema(root_schema, schema):
     
     return schema
 
-
 @app.route("/", methods=["GET", "POST"])
 def index():
-    openapi_schema = None
-    api_info = []
-    selected_schema = None
+    openapi_schema_data = ""
+    paths = []
+    request_schema = None
+    response_schema = None
     selected_path = None
-    selected_method = None
+    request_data = ""
+    response_data = ""
+    request_validation_errors = []
+    response_validation_errors = []
 
     if request.method == "POST":
-        # Get the OpenAPI schema from the user input
-        schema_data = request.form.get("openapi_schema", "")
+        # Get the OpenAPI schema and data
+        openapi_schema_data = request.form.get("openapi_schema")
         selected_path = request.form.get("selected_path")
-        selected_method = request.form.get("selected_method")
+        request_data = request.form.get("request_data")
+        response_data = request.form.get("response_data")
 
         try:
-            # Parse the input schema as JSON
-            openapi_schema = json.loads(schema_data)
+            # Load the OpenAPI schema JSON
+            openapi_schema = json.loads(openapi_schema_data)
             paths = openapi_schema.get("paths", {})
+            # Parse the selected path for response schema
+            if selected_path:
+                schemas = extract_schema_for_method(openapi_schema,selected_path,"post")
+                request_schema = schemas.get("request_schema",{})
+                response_schema = add_additional_properties_false(schemas.get("response_schema",{}))                
+                # Validate the request data if provided
+                if request_data and request_schema:
+                    try:
+                        request_json = json.loads(request_data)
+                        errors = v.validate_openapi_schema(instance=request_json, schema=request_schema)
+                        request_validation_errors = errors
+                    except ValidationError as ve:
+                        request_validation_errors = f"Request validation failed: {str(ve)}"
+                    except json.JSONDecodeError:
+                        request_validation_errors = "Invalid request JSON format."
 
-            # Extract available paths and methods for selection
-            api_info = [
-                {"path": path, "methods": list(methods.keys())}
-                for path, methods in paths.items()
-            ]
+                # Validate the response data if provided
+                if response_data and response_schema:
+                    try:
+                        response_json = json.loads(response_data)
+                        errors = v.validate_openapi_schema(instance=response_json, schema=response_schema)
+                        response_validation_errors = errors
+                    except ValidationError as ve:
+                        response_validation_errors = f"Response validation failed: {str(ve)}"
+                    except json.JSONDecodeError:
+                        response_validation_errors = "Invalid response JSON format."
 
-            # If the user has selected a path and method, extract the relevant schema
-            if selected_path and selected_method:
-                selected_schema = extract_schema_for_method(
-                    openapi_schema, selected_path, selected_method
-                )
         except json.JSONDecodeError:
-            # Handle JSON parse error
-            openapi_schema = None
+            request_validation_errors = "Invalid OpenAPI JSON format."
 
     return render_template(
         "index.html",
-        api_info=api_info,
-        selected_schema=selected_schema,
+        openapi_schema_data=openapi_schema_data,
+        paths=paths,
         selected_path=selected_path,
-        selected_method=selected_method,
+        request_schema=request_schema,
+        response_schema=response_schema,
+        request_data=request_data,
+        response_data=response_data,
+        request_validation_errors=request_validation_errors,
+        response_validation_errors=response_validation_errors
     )
+
 
 
 if __name__ == "__main__":

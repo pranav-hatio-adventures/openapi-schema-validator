@@ -1,23 +1,38 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
-    padding: 20px;
 }
 
 .container {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    height: 100svh;
+    padding: 5px;
+    gap:10px;
 }
 
 .left-column, .right-column {
-    width: 45%;
+    height: 100%;
+    overflow: auto;
+    padding: 10px;
+    flex:1;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 textarea {
+    min-height: 300px;
     width: 100%;
     padding: 10px;
-    font-family: monospace;
     margin-bottom: 10px;
+    flex:1;
 }
 
 button {
@@ -46,5 +61,17 @@ pre {
     white-space: pre-wrap;
     word-wrap: break-word;
     max-height: 400px;
+    min-height: 300px;
     overflow: auto;
+}
+.error{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.error>ul{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: red;
 }

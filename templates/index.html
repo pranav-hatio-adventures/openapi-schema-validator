@@ -1,75 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Open Api Schema Validator</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}"
-    />
-  </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>OpenAPI Schema Validator</title>
+</head>
+<body>
 
-  <body>
-    <div class="container">
-      <h1>OpenAPI Schema Validator</h1>
-
-      <form method="POST" action="/">
+    <form method="POST" class="container">
         <div class="left-column">
-            <label for="openapi_schema">OpenAPI Schema (JSON):</label>
-            <textarea id="openapi_schema" name="openapi_schema" rows="20" cols="50">{{ request.form.get('openapi_schema', '') }}</textarea>
-            <button type="submit">Parse Schema</button>
+            <h1>OpenAPI Schema Validator</h1>
+            <h2>Input OpenAPI Schema (JSON)</h2>
+            <textarea name="openapi_schema" placeholder="Paste your OpenAPI schema here">{{ openapi_schema_data }}</textarea>
+            <button type="submit">Submit</button>
         </div>
-
         <div class="right-column">
-            {% if api_info %}
-                <h2>Select API Path and Method</h2>
-                <label for="selected_path">API Path:</label>
-                <select id="selected_path" name="selected_path" onchange="this.form.submit()">
-                    <option value="">-- Select Path --</option>
-                    {% for api in api_info %}
-                        <option value="{{ api.path }}" {% if api.path == selected_path %}selected{% endif %}>{{ api.path }}</option>
+            {% if paths %}
+                <h2>Select Path</h2>
+                <label for="selected_path">Select Path:</label>
+                <select name="selected_path">
+                    {% for path in paths %}
+                        <option value="{{ path }}" {% if selected_path == path %}selected{% endif %}>{{ path }}</option>
                     {% endfor %}
                 </select>
-
-                <label for="selected_method">Method:</label>
-                <select id="selected_method" name="selected_method" onchange="this.form.submit()">
-                    <option value="">-- Select Method --</option>
-                    {% if selected_path %}
-                        {% for method in api_info|selectattr('path', 'equalto', selected_path) %}
-                            {% for method_item in method.methods %}
-                                <option value="{{ method_item }}" {% if method_item == selected_method %}selected{% endif %}>{{ method_item }}</option>
-                            {% endfor %}
-                        {% endfor %}
-                    {% endif %}
-                </select>
+                <button type="submit">Get Schema</button>
             {% endif %}
+            {% if response_schema %}
+                <h2>Validate Response</h2>
+                <h3>Response Schema</h3>
+                <pre>{{ response_schema | tojson(indent=2) }}</pre>
+                <h3>Response Data to Validate:</h3>
+                <textarea name="response_data" placeholder="Enter response data to validate">{{ response_data }}</textarea>
+                <button type="submit">Validate</button>
+            {% if response_validation_errors %}
+            <div class="error">
+                <h3>Validation Errors:</h3>
+                <ul>
+                    {% for error in response_validation_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
 
-            {% if selected_schema %}
-                <h2>Request Schema</h2>
-                <pre>{{ selected_schema.request_schema | tojson(indent=2) }}</pre>
-
-                <h2>Response Schema</h2>
-                <pre>{{ selected_schema.response_schema | tojson(indent=2) }}</pre>
-            {% endif %}
+        {% endif %}
+        {% endif %}
         </div>
+        
     </form>
-
-      {% if errors %}
-      <div class="error">
-        <h3>Validation Errors:</h3>
-        <ul>
-          {% for error in errors %}
-          <li>{{ error }}</li>
-          <br />
-          {% endfor %}
-        </ul>
-      </div>
-      {% elif result %}
-      <div class="success">
-        <h3>{{ result }}</h3>
-      </div>
-      {% endif %}
-    </div>
-  </body>
+</body>
 </html>
